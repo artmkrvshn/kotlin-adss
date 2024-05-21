@@ -1,89 +1,57 @@
-import kotlin.system.exitProcess
-
 fun main() {
-    val matrixDataVar4 = arrayOf(
-        doubleArrayOf(3.0, 2.0, 2.0),
-        doubleArrayOf(1.0, -2.0, 5.0),
-        doubleArrayOf(-2.0, -3.0, 4.0)
+    val matrix = arrayOf(
+        doubleArrayOf(6.0, 2.0, -4.0, -2.0),
+        doubleArrayOf(4.0, 2.0, 2.0, 2.0),
+        doubleArrayOf(6.0, 6.0, 8.0, 4.0)
     )
 
-//    val matrixData = arrayOf(
-//        doubleArrayOf(5.0, -3.0, 7.0),
-//        doubleArrayOf(-1.0, 4.0, 3.0),
-//        doubleArrayOf(6.0, -2.0, 5.0)
-//    )
+    val probabilities = doubleArrayOf(0.25, 0.25, 0.25, 0.25)
+    val alpha = 0.5
 
-
-    val matrixData = arrayOf(
-        doubleArrayOf(6.0, 2.0, 5.0),
-        doubleArrayOf(-3.0, 4.0, -1.0),
-        doubleArrayOf(1.0, 4.0, 3.0)
-    )
-
-
-    var matrix = Matrix(matrixData)
-
-    while (true) {
-        println("1 - Enter matrix A; 2 - Inverse; 3 - Rank; 4 - Solve; 5 - Print matrix; 0 - Exit")
-        val input = readln()
-        when (input) {
-            "0" -> exitProcess(0)
-            "1" -> {
-                print("Enter variant 4? +/-: ")
-                val answer = readln().trim()
-                if (answer == "+") {
-                    matrix = Matrix(matrixDataVar4)
-                } else {
-                    print("Enter matrix's rows: ")
-                    val rows = readln().trim().toInt()
-
-                    print("Enter matrix's columns: ")
-                    val columns = readln().trim().toInt()
-
-                    val newMatrixData = Array(rows) { DoubleArray(columns) }
-
-                    println("Enter the elements of the matrix A:")
-                    for (i in 0 until rows) {
-                        val numbers = readln().split(" ").toList().map { it.toDouble() }.toDoubleArray()
-                        if (numbers.size != columns) {
-                            throw RuntimeException("Wrong number of columns!")
-                        }
-                        newMatrixData[i] = numbers
-                    }
-                    matrix = Matrix(newMatrixData)
-                }
-            }
-
-            "2" -> {
-                println("Matrix A:")
-                println(matrix.toString())
-                val inverseMatrix = matrix.inverse()
-                println("\nInverse Matrix A^-1:")
-                println(inverseMatrix.toString())
-            }
-
-            "3" -> {
-                val rank = matrix.rank()
-                println("\nRank of Matrix A: $rank")
-            }
-
-            "4" -> {
-                println("Enter the elements of the vector B:")
-                val vectorB = readln().split(" ").toList().map { it.toDouble() }.toDoubleArray()
-
-                val solution = matrix.solve(vectorB)
-                println("\nSolution of the system AX = B:")
-                println(arrayToString(solution))
-            }
-
-            "5" -> {
-                println(matrix.toString())
-            }
-        }
-
-    }
+    println("Wald's criterion: ${criteriaWald(matrix)}")
+    println("Maximax criterion: ${criteriaMaximax(matrix)}")
+    println("Hurwicz's criterion: ${criteriaHurwicz(matrix, alpha)}")
+    println("Savage's criterion: ${criteriaSavage(matrix)}")
+    println("Bayes' criterion: ${criteriaBayes(matrix, probabilities)}")
+    println("Laplace's criterion: ${criteriaLaplace(matrix)}")
 }
 
-private fun arrayToString(array: DoubleArray): String {
-    return array.joinToString("\t") { value -> "%.3f".format(value) }
+fun criteriaWald(matrix: Array<DoubleArray>): List<Int> {
+    val minInRows = matrix.map { row -> row.minOrNull()!! }
+    val maxOfMins = minInRows.maxOrNull()!!
+    return minInRows.withIndex().filter { it.value == maxOfMins }.map { it.index + 1 }
+}
+
+fun criteriaMaximax(matrix: Array<DoubleArray>): List<Int> {
+    val maxInRows = matrix.map { row -> row.maxOrNull()!! }
+    val maxOfMaxs = maxInRows.maxOrNull()!!
+    return maxInRows.withIndex().filter { it.value == maxOfMaxs }.map { it.index + 1 }
+}
+
+fun criteriaHurwicz(matrix: Array<DoubleArray>, alpha: Double): List<Int> {
+    val minInRows = matrix.map { row -> row.minOrNull()!! }
+    val maxInRows = matrix.map { row -> row.maxOrNull()!! }
+    val hurwiczValues = minInRows.zip(maxInRows) { min, max -> alpha * min + (1 - alpha) * max }
+    val maxHurwicz = hurwiczValues.maxOrNull()!!
+    return hurwiczValues.withIndex().filter { it.value == maxHurwicz }.map { it.index + 1 }
+}
+
+fun criteriaSavage(matrix: Array<DoubleArray>): List<Int> {
+    val maxInCols = matrix[0].indices.map { col -> matrix.map { row -> row[col] }.maxOrNull()!! }
+    val regretMatrix = matrix.map { row -> row.mapIndexed { col, value -> maxInCols[col] - value }.toDoubleArray() }
+    val maxInRows = regretMatrix.map { row -> row.maxOrNull()!! }
+    val minOfMaxs = maxInRows.minOrNull()!!
+    return maxInRows.withIndex().filter { it.value == minOfMaxs }.map { it.index + 1 }
+}
+
+fun criteriaBayes(matrix: Array<DoubleArray>, probabilities: DoubleArray): List<Int> {
+    val weightedValues = matrix.map { row -> row.zip(probabilities) { value, prob -> value * prob }.sum() }
+    val maxWeighted = weightedValues.maxOrNull()!!
+    return weightedValues.withIndex().filter { it.value == maxWeighted }.map { it.index + 1 }
+}
+
+fun criteriaLaplace(matrix: Array<DoubleArray>): List<Int> {
+    val averageValues = matrix.map { row -> row.average() }
+    val maxAverage = averageValues.maxOrNull()!!
+    return averageValues.withIndex().filter { it.value == maxAverage }.map { it.index + 1 }
 }
