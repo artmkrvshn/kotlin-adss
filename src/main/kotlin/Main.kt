@@ -56,10 +56,10 @@ fun main() {
 
             "2" -> {
                 println("Matrix A:")
-                println(matrixToString(matrix))
+                println(matrix.toString())
                 val inverseMatrix = matrix.inverse()
                 println("\nInverse Matrix A^-1:")
-                println(matrixToString(inverseMatrix))
+                println(inverseMatrix.toString())
             }
 
             "3" -> {
@@ -77,15 +77,11 @@ fun main() {
             }
 
             "5" -> {
-                println(matrixToString(matrix))
+                println(matrix.toString())
             }
         }
 
     }
-}
-
-private fun matrixToString(matrixGPT: Matrix): String {
-    return matrixGPT.data.joinToString("\n") { it.joinToString("\t") { value -> "%.3f".format(value) } }
 }
 
 private fun arrayToString(array: DoubleArray): String {

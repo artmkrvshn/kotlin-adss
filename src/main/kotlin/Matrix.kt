@@ -11,6 +11,7 @@ data class Matrix(val data: Array<DoubleArray>) {
         }
         val matrix = clone()
         for (i in 0 until rows) {
+            println("\nStep #${i + 1}")
             matrix.jordanElimination(i, i)
         }
         return matrix
@@ -36,6 +37,13 @@ data class Matrix(val data: Array<DoubleArray>) {
         if (rows != columns || rows != vectorB.size) {
             throw RuntimeException("Matrix dimensions do not match for solving the system")
         }
+
+        println("Matrix A: ")
+        println(this)
+
+        println("Vector B: ")
+        println(vectorB)
+
         val inverseMatrix = inverse()
         val solution = DoubleArray(vectorB.size)
         for (i in solution.indices) {
@@ -48,9 +56,10 @@ data class Matrix(val data: Array<DoubleArray>) {
 
     private fun jordanElimination(row: Int, column: Int) {
         val original = data.map { it.clone() }.toTypedArray()
-
         val element = data[row][column]
         data[row][column] = 1.0
+
+        println("Element: A[$row][$column] = $element\n")
 
         for (i in 0 until columns) {
             if (i != column) {
@@ -73,6 +82,9 @@ data class Matrix(val data: Array<DoubleArray>) {
                 data[i][j] /= element
             }
         }
+
+        println("Matrix after elimination: ")
+        println(this)
     }
 
     private fun clone(): Matrix {
@@ -98,4 +110,9 @@ data class Matrix(val data: Array<DoubleArray>) {
         result = 31 * result + columns
         return result
     }
+
+    override fun toString(): String {
+        return data.joinToString("\n") { it.joinToString("\t") { value -> "%.3f".format(value) } }
+    }
+
 }
